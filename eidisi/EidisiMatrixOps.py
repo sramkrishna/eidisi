@@ -18,7 +18,7 @@ import json
 import pprint
 import logging
 import urllib.parse
-
+import urllib.request
 import gi
 gi.require_version('Soup', '2.4')
 
@@ -37,7 +37,7 @@ class GnomeMatrixClientApi(GObject.Object):
     __gtype_name__ = 'Client'
 
     __gsignals__ = {
-
+        'messages-received': (GObject.SIGNAL_RUN_FIRST, None, (int,))
     }
     __gproperties__ = {
         'username': (
@@ -68,16 +68,18 @@ class GnomeMatrixClientApi(GObject.Object):
 
         self.hostname = 'matrix.org'
         self.port =''
-        self.username = 'sample'
-        self.password = 'samplepass'
+        self.username = ''
+        self.password = ''
         self.token = None # token for future interactions
         self.home_server = None
         self.userid = None
+        self.next_batch = None
 
         self.base_url = 'https://%s:%s'%(self.hostname,self.port)
         self.api_path = "/_matrix/client/r0"
 
         self._session = Soup.Session.new()
+
 
         for prop in ('username', 'password'):
             self.connect('notify::' + prop, self._on_authentication)
@@ -105,7 +107,8 @@ class GnomeMatrixClientApi(GObject.Object):
 
     def _on_message_finish(self, session, message, user_data=None):
 
-        print ("I am in on_message")
+
+        logging.info("in on_message")
 
         status_code = message.props.status_code
         logging.debug('Got response code: {} ({})'.format(Soup.Status(status_code).value_name,
@@ -125,28 +128,41 @@ class GnomeMatrixClientApi(GObject.Object):
 
         response_str = message.props.response_body_data.get_data().decode('UTF-8')
         response = json.loads(response_str)
-        print(response)
-        logging.debug('<<<\n{}'.format(pprint.pformat(response)))
+
+#        logging.debug('<<<\n{}'.format(pprint.pformat(response)))
+
 
         if user_data:
             user_data(response)
 
     def _create_message(self,method, url, payload):
-        print(url)
         msg = Soup.Message.new(method, url)
         msg.set_request("application/json", Soup.MemoryUse.COPY,
                         bytes(payload,'UTF-8'))
         return msg
 
-    def _make_request_async(self, method, url, content, callback=None):
+    def _make_request_async(self, method, url, content=None,
+                                query_params={}, headers={}, callback=None):
 
         # create our message that we want to send
         #FIXME: test 'method' to make sure it is valid
 
-        req_url = self.base_url + self.api_path + url
-        payload = json.dumps(content)
-        print ("payload = %s"%(payload))
-        method = 'POST'
+        query_uri = ""
+        payload = ""
+
+        if self.token:
+            query_params["access_token"] = self.token
+            query_params["user_id"] = self.userid
+
+            query_uri=urllib.parse.urlencode(query_params)
+
+        if query_uri:
+            req_url = self.base_url + self.api_path + url+'?'+query_uri
+        else:
+            req_url = self.base_url + self.api_path + url
+#        print(req_url)
+        if content is not None:
+            payload = json.dumps(content)
         msg_to_send = self._create_message(method, req_url, payload)
         self._session.queue_message(msg_to_send, self._on_message_finish,
                                     user_data=callback)
@@ -158,6 +174,9 @@ class GnomeMatrixClientApi(GObject.Object):
         self.token = response["access_token"]
         self.home_server = response["home_server"]
 
+        GLib.timeout_add_seconds(2, self._handle_sync)
+
+
     def login(self, login_type="m.login.password", **kwargs):
         """ perform matrix login """
 
@@ -168,4 +187,91 @@ class GnomeMatrixClientApi(GObject.Object):
         for keys in kwargs:
             content[keys] = kwargs[keys]
 
-        self._make_request_async('POST', '/login', content, self._handle_login)
+        self._make_request_async('POST', '/login', content, callback=self._handle_login)
+
+    def _handle_register(self, response):
+        """ handle register call """
+
+        self.userid = response["user_id"]
+        self.token = response["access_token"]
+        self.home_server = response["access_token"]
+
+    def register(self, login_type="m.login.password", **kwargs):
+        """ performs /register """
+
+        content = {
+            "type": login_type
+        }
+
+        for key in kwargs:
+            content[key] = kwargs[key]
+
+        self._make_request_async('POST', '/register', content,
+                                 self._handle_register)
+
+    def logout(self):
+        """ perform /logout """
+
+        self._make_request_async("POST","/logout")
+
+    def create_room(self, alias=None, is_public=False, invitees=()):
+        """ Create a room """
+
+        content = {
+            "visibility": "public" if is_public else "private"
+        }
+
+        if alias:
+            content["room_alias_name"] = alias
+
+        if invitees:
+            content["invite"] = invitees
+
+        self._make_request_async('POST', '/createRoom', content)
+
+    def join_room(self, room_id_or_alias):
+        """ join a room """
+
+        if not room_id_or_alias:
+            print ("not a valid room id")
+
+        path = "/join/%s" % quote(room_id_or_alias)
+
+        self._make_request_async("POST", path)
+
+    def sendmsg(self, msgtype, message):
+        """ sends a message to a room """
+        content = {
+            "msgtype": msgtype,
+            "body": message
+        }
+
+    def _handle_sync_output(self, response):
+
+        logging.info("sent an emit")
+        # capture the next batch so we know what to sync against next time.
+        self.next_batch = response['next_batch']
+        self.emit("messages-received", 42)
+
+    def _handle_sync(self, since=None, timeout_ms=3000, filter=None,
+                     full_state=None, set_presence=None):
+
+        request = {
+            "timeout": timeout_ms
+        }
+
+        if self.next_batch:
+            request["since"] = self.next_batch
+        if filter:
+            request["filter"] = filter
+
+        if full_state:
+            request["full_state"] = full_state
+
+        if set_presence:
+            request["set_presence"] = set_presence
+
+        self._make_request_async("GET", "/sync", query_params=request,
+                                    callback=self._handle_sync_output)
+
+        return True
