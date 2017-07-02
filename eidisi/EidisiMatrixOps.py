@@ -39,7 +39,7 @@ MATRIX_V2_API_PATH = "/_matrix/client/r0"
 class GnomeMatrixClientApi(GObject.Object):
     """GObject based Matrix Client """
 
-    __gtype_name__ = 'Client'
+    __gtype_name__ = 'GnomeMatrixClientApi'
 
     __gsignals__ = {
         'messages-received': (GObject.SIGNAL_RUN_FIRST, None, (int,))
@@ -76,7 +76,7 @@ class GnomeMatrixClientApi(GObject.Object):
         super().__init__(**kwargs)
 
         self.hostname = kwargs['hostname']
-#        self.port = ''
+#        self.port = '
         self.port = kwargs['port']
         self.username = kwargs['username']
         self.password = kwargs['password']
