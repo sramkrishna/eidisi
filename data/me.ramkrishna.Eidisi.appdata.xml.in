@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>me.ramkrishna.Eidisi.desktop</id>
+  <translation type="gettext">eidisi</translation>
+  <name>GNOME Matrix Client</name>
+  <developer_name>Sriram Ramkrishna </developer_name>
+  <summary>GNOME Matrix Client</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <description>
+    <p>A matrix client client using GNOME </p>
+  </description>
+  <url type="homepage">https://github.com/sramkrishna/eidisi/</url>
+  <url type="bugtracker">https://github.com/sramkrishna/eidisi/issues</url>
+  <kudos>
+    <kudo>AppMenu</kudo>
+    <kudo>ModernToolkit</kudo>
+  </kudos>
+  <update_contact>sri_at_ramkrishna_dot_me</update_contact>
+</component>

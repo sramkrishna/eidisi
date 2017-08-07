@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Eidisi
+Comment=GNOME Matrix Client
+Exec=@bindir@/eidisi %U
+Icon=me.ramkrishna.Eidisi
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Network;GTK;GNOME;Chat
+Keywords=chat;matrix;irc;stack

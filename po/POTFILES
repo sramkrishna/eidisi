@@ -1,0 +1,6 @@
+data/me.ramkrishna.Eidisi.desktop.in.in
+data/me.ramkrishna.Eidisi.appdata.xml.in
+data/me.ramkrishna.Eidisi.gschema.xml
+data/ui/applicationwindow.ui
+eidisi/EidisiClient.py
+eidisi/EidisiMatrixOps.py
