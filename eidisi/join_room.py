@@ -54,6 +54,11 @@ class LoginDetails(Gtk.Dialog):
 
         self.connect('response', lambda dialog, response: dialog.destroy())
 
+    def do_resonse(self, response_id):
+        print("I got called")
+        if response_id == Gtk.ResponseType.OK:
+            print("response is OK")
+
     @GtkTemplate.Callback
     def handle_pref_apply(self, button):
         self.response(Gtk.ResponseType.OK)

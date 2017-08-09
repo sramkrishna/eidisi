@@ -58,8 +58,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
     def _on_join_room(self, action,param):
 
         print("I clicked on the plus button!")
-        dialog = LoginDetails(transient_for=self)#, modal=True)
-        results = dialog.run()
+        dialog = LoginDetails(transient_for=self, modal=True)
+#        results = dialog.present()
+#        results = dialog.run()
         print ("results = %s"%results)
 
     def handle_prefs_apply(self):
