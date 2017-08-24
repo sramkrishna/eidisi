@@ -70,14 +70,15 @@ class Application(Gtk.Application):
                                                password=self.settings['password'],
                                                hostname=self.settings['hostname'],
                                                port=self.settings['port'])
+
             for prop in ['username', 'password', 'hostname', 'port']:
                 self.settings.bind(prop, self.client, prop, Gio.SettingsBindFlags.GET)
 
             self.window = ApplicationWindow(application=self, client=self.client)
             self.window.connect('destroy', on_window_destroy)
-#            self.client.props.timeout = 10
+#        self.client.props.timeout = 10
 
-        self.window.present()
+            self.window.present()
 
 
     def do_shutdown(self):
