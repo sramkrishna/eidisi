@@ -45,14 +45,15 @@ class LoginDetails(Gtk.Dialog):
         super().__init__(**kwargs)
         self.init_template()
 
-        self.set_response_sensitive(Gtk.ResponseType.OK, False)
+        self.set_response_sensitive(Gtk.ResponseType.OK, True)
         self.settings = Gio.Settings.new('me.ramkrishna.Eidisi')
 
         self.password.set_visibility(False)
 
         self.cancellable = Gio.Cancellable.new()
 
-        self.connect('response', lambda dialog, response: dialog.destroy())
+#        self.connect('response', lambda dialog, response: dialog.destroy())
+        self.connect('response', self.handle_pref_response)
 
     def do_resonse(self, response_id):
         print("I got called")
@@ -60,14 +61,27 @@ class LoginDetails(Gtk.Dialog):
             print("response is OK")
 
     @GtkTemplate.Callback
-    def handle_pref_apply(self, button):
-        self.response(Gtk.ResponseType.OK)
-        print("We clicked on apply!")
+    def handle_pref_response(self, dialog, responseid):
 
-        server = self.homeserver.get_text()
-        username = self.username.get_text()
-        print ("the value for homeserver is: ** %s **"%(server))
-        print ("the value for username is: ** %s **"%(username))
+        if responseid == Gtk.ResponseType.OK:
+            print("we clicked OK")
+            self.hostname = self.homeserver.get_text()
+            self.port = int(self.portnum.get_text())
+            self.userid = self.username.get_text()
+            self.passwd = self.password.get_text()
+
+#            self.settings.set_string('username', username)
+#            self.settings.set_string('password', password)
+#            self.settings.set_uint16('port', port)
+#            self.settings.set_string('hostname', hostname)
+
+            print ("the value for homeserver is: ** %s **"%(self.hostname))
+            print ("the value for username is: ** %s **"%(self.userid))
+
+        elif responseid == Gtk.ResponseType.CANCEL:
+            print("we clicked cancel")
+
+        dialog.destroy()
 
     @GtkTemplate.Callback
     def handle_pref_cancel(self, button):

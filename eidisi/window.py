@@ -59,13 +59,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
 
         print("I clicked on the plus button!")
         dialog = LoginDetails(transient_for=self, modal=True)
-#        results = dialog.present()
-#        results = dialog.run()
-        print ("results = %s"%results)
 
-    def handle_prefs_apply(self):
-
-        print("we are doing nothing")
+    def _connect(self, hostname, port, username, password):
+        print ("hello!")
 
     def _add_action(self):
 
