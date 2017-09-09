@@ -64,6 +64,9 @@ class ApplicationWindow(Gtk.ApplicationWindow):
         self._add_action.connect('activate', self._on_join_room)
         self.add_action(self._add_action)
 
+        displaybuffer = self.chatbox.get_buffer()
+        displaybuffer.set_text("some sample text for you to see!")
+
         # start authentication
 
         self.client.login()
