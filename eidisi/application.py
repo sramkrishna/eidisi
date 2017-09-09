@@ -32,10 +32,12 @@ from gi.repository import (
 from .gi_composites import GtkTemplate
 from .EidisiMatrixOps import GnomeMatrixClientApi
 from .window import ApplicationWindow
-
+from .settings import Settings
 
 class Application(Gtk.Application):
-    __gtype_name__ = "Application"
+    __gtype_name_ = "Application"
+
+   # used to check to see if username and password exists
 
     version = GObject.Property(type=str, flags=GObject.ParamFlags.CONSTRUCT_ONLY|GObject.ParamFlags.READWRITE)
 
@@ -56,6 +58,14 @@ class Application(Gtk.Application):
         action.connect('activate', lambda act, param: self.quit())
         self.add_action(action)
 
+        action = Gio.SimpleAction.new('about')
+        action.connect('activate', self.on_about)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new('settings')
+        action.connect('activate', self.on_settings)
+        self.add_action(action)
+
         action = Gio.SimpleAction.new('join')
         action.connect('activate', self._on_joinroom)
         self.add_action(action)
@@ -66,17 +76,22 @@ class Application(Gtk.Application):
 #            self.client.props.timeout = 30 # We can relax the timer if there is no UI
 
         if not self.window:
-            self.client = GnomeMatrixClientApi(username=self.settings['username'],
-                                               password=self.settings['password'],
-                                               hostname=self.settings['hostname'],
-                                               port=self.settings['port'])
+            print("username is",self.settings['username'])
+            if self.settings['username'] != None and \
+               self.settings['password'] != None and \
+               self.settings['hostname'] != None:
 
-            for prop in ['username', 'password', 'hostname', 'port']:
-                self.settings.bind(prop, self.client, prop, Gio.SettingsBindFlags.GET)
+                    self.client = GnomeMatrixClientApi(username=self.settings['username'],
+                                                       password=self.settings['password'],
+                                                       hostname=self.settings['hostname'],
+                                                       port=self.settings['port'])
+
+#            for prop in ['username', 'password', 'hostname', 'port']:
+#                self.settings.bind(prop, self.client, prop, Gio.SettingsBindFlags.GET)
 
             self.window = ApplicationWindow(application=self, client=self.client)
             self.window.connect('destroy', on_window_destroy)
-#        self.client.props.timeout = 10
+            self.client.login()
 
             self.window.present()
 
@@ -86,3 +101,17 @@ class Application(Gtk.Application):
 
     def _on_joinroom():
         print("oh yeah, we got clicked!")
+
+    def on_settings(self, action, params):
+
+        dialog = Settings(modal=True)
+        dialog.present()
+
+    def on_about(self, action, param):
+        about = Gtk.AboutDialog(transient_for=self.window, modal=True,
+                                license_type=Gtk.License.GPL_3_0,
+                                authors=['Sriram Ramkrishna', ],
+                                copyright='Copyright © 2017 Sriram Ramkrishna',
+                                logo_icon_name='me.ramkrishna.Eidisi',
+                                version=self.version)
+        about.present() 

@@ -4,7 +4,7 @@
 
     <key type="s" name="username">
       <default>""</default>
-      <summary>Email address</summary>
+      <summary>account name</summary>
     </key>
 
     <key type="s" name="password">
@@ -17,7 +17,7 @@
       <summary>Hostname to connect to</summary>
     </key>
 
-    <key type="i" name="port">
+    <key type="q" name="port">
       <default>9091</default>
       <summary>Port to connect to</summary>
     </key>

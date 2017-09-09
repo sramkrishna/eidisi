@@ -42,7 +42,9 @@ class GnomeMatrixClientApi(GObject.Object):
     __gtype_name__ = 'GnomeMatrixClientApi'
 
     __gsignals__ = {
-        'messages-received': (GObject.SIGNAL_RUN_FIRST, None, (int,))
+        'messages-received': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+        'authenticated':  (GObject.SIGNAL_RUN_FIRST, None, ()),
+        'auth-failed':  (GObject.SIGNAL_RUN_FIRST, None, (str,)),
     }
     __gproperties__ = {
         'username': (
@@ -76,7 +78,6 @@ class GnomeMatrixClientApi(GObject.Object):
         super().__init__(**kwargs)
 
         self.hostname = kwargs['hostname']
-#        self.port = '
         self.port = kwargs['port']
         self.username = kwargs['username']
         self.password = kwargs['password']
@@ -127,7 +128,6 @@ class GnomeMatrixClientApi(GObject.Object):
 
     def _on_message_finish(self, session, message, user_data=None):
 
-
         if user_data:
             logging.warning("in on_message, to handle %s"%(user_data.__name__))
         else:
@@ -142,8 +142,10 @@ class GnomeMatrixClientApi(GObject.Object):
 
         if status_code == Soup.Status.UNAUTHORIZED:
            if not self.login or not self.password:
-                logging.warning('Requires login and password')
+               self.emit('auth-failed')
+               logging.warning('Requires login and password')
            else:
+               self.emit('auth-failed')
                logging.warning('Failed to authenticate using {}'.format(self.login))
 
         response_str = message.props.response_body_data.get_data().decode('UTF-8')
@@ -233,6 +235,8 @@ class GnomeMatrixClientApi(GObject.Object):
 
         print("token is %s"%self.token)
 
+        self.emit('authenticated')
+
 
         # get a defaeult room on login.
         room_id_query_url = "/directory/room/%s"%(quote(self.default_room_alias))
@@ -245,10 +249,8 @@ class GnomeMatrixClientApi(GObject.Object):
                                 query_params={}, headers={},
                                 callback=self._handle_default_room_id)
 
-
     def login(self, login_type="m.login.password"):
         """ perform matrix login """
-
 
         content = {
             "type": login_type,

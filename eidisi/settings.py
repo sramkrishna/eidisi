@@ -32,7 +32,7 @@ from .gi_composites import GtkTemplate
 from .EidisiMatrixOps import GnomeMatrixClientApi
 
 @GtkTemplate(ui='/me/ramkrishna/Eidisi/ui/login_details.ui')
-class LoginDetails(Gtk.Dialog):
+class Settings(Gtk.Dialog):
     __gtype_name__ = 'login_details'
 
     homeserver = GtkTemplate.Child()
@@ -47,36 +47,39 @@ class LoginDetails(Gtk.Dialog):
 
         self.set_response_sensitive(Gtk.ResponseType.OK, True)
         self.settings = Gio.Settings.new('me.ramkrishna.Eidisi')
-
         self.password.set_visibility(False)
 
         self.cancellable = Gio.Cancellable.new()
 
-#        self.connect('response', lambda dialog, response: dialog.destroy())
         self.connect('response', self.handle_pref_response)
 
-    def do_resonse(self, response_id):
-        print("I got called")
-        if response_id == Gtk.ResponseType.OK:
-            print("response is OK")
+        # autofill the form with previous values as a convenience
+
+        hostname = self.settings.get_string("hostname")
+        port = self.settings['port']
+#        GLib.Variant("q", self.settings.get_value("port"))
+        userid = self.settings.get_string("username")
+        passwd = self.settings.get_string("password")
+
+        self.homeserver.set_text(hostname)
+        self.portnum.set_text(str(port))
+        self.username.set_text(userid)
+        self.password.set_text(passwd)
+
 
     @GtkTemplate.Callback
     def handle_pref_response(self, dialog, responseid):
 
         if responseid == Gtk.ResponseType.OK:
-            print("we clicked OK")
-            self.hostname = self.homeserver.get_text()
-            self.port = int(self.portnum.get_text())
-            self.userid = self.username.get_text()
-            self.passwd = self.password.get_text()
+            hostname = self.homeserver.get_text()
+            port = int(self.portnum.get_text())
+            userid = self.username.get_text()
+            passwd = self.password.get_text()
 
-#            self.settings.set_string('username', username)
-#            self.settings.set_string('password', password)
-#            self.settings.set_uint16('port', port)
-#            self.settings.set_string('hostname', hostname)
-
-            print ("the value for homeserver is: ** %s **"%(self.hostname))
-            print ("the value for username is: ** %s **"%(self.userid))
+            self.settings.set_string('username', userid)
+            self.settings.set_string('password', passwd)
+            self.settings.set_value('port', GLib.Variant("t",port))
+            self.settings.set_string('hostname', hostname)
 
         elif responseid == Gtk.ResponseType.CANCEL:
             print("we clicked cancel")

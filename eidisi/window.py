@@ -31,7 +31,8 @@ from gi.repository import (
 
 from .gi_composites import GtkTemplate
 from .EidisiMatrixOps import GnomeMatrixClientApi
-from .join_room import LoginDetails
+from .settings import Settings
+
 
 @GtkTemplate(ui='/me/ramkrishna/Eidisi/ui/main.ui')
 class ApplicationWindow(Gtk.ApplicationWindow):
@@ -39,30 +40,65 @@ class ApplicationWindow(Gtk.ApplicationWindow):
     __gtype_name__ = 'ApplicationWindow'
 
     client = GObject.Property(type=GnomeMatrixClientApi)
-    #header = GtkTemplate.Child()
-    #contentbox = GtkTemplate.Child()
-    #statusbar = GtkTemplate.Child()
-    #entry = GtkTemplate.Child()
+    header = GtkTemplate.Child()
+    contentbox = GtkTemplate.Child()
+    chatbox = GtkTemplate.Child()
+    statusbar = GtkTemplate.Child()
+    entry = GtkTemplate.Child()
 
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
         self.init_template()
 
+        self.client = kwargs['client']
+        self.client.connect('messages-received', self._on_message_received)
+        self.client.connect('authenticated', self._on_authenticated)
+        self.client.connect('auth-failed', self._on_auth_failed)
+
+        self.settings = Gio.Settings.new('me.ramkrishna.Eidisi')
+        for prop in ['username', 'password', 'hostname', 'port']:
+           self.settings.bind(prop, self.client, prop, Gio.SettingsBindFlags.GET)
+
         self._add_action = Gio.SimpleAction.new('join', GLib.VariantType('s'))
         self._add_action.connect('activate', self._on_join_room)
         self.add_action(self._add_action)
 
+        # start authentication
+
+        self.client.login()
+
         #self.client.connect('notify::connected', self._on_connected_change)
+
+    def _on_message_received(self, message):
+
+        print("I received the message: %s"%(message))
+
+    def _on_authenticated(self, value):
+
+        print ("we are authenticated")
+
+        self.statusbar.push(self.statusbar.get_context_id("loginauth"), "Connected")
+
+    def _on_auth_failed(self, message):
+
+        print ("authentication failed")
 
     def _on_join_room(self, action,param):
 
         print("I clicked on the plus button!")
-        dialog = LoginDetails(transient_for=self, modal=True)
+        # Load the settings to see if we need to provide login details
+
+        settings = Gio.Settings.new('me.ramkrishna.Eidisi')
+        if settings.get_string("username") != None and \
+           settings.get_string("password") != None and \
+           settings.get_string("hostname") != None:
+                dialog = Settings(transient_for=self, modal=True)
+        else:
+            pass
 
     def _connect(self, hostname, port, username, password):
         print ("hello!")
 
     def _add_action(self):
-
         print("I got nothing")

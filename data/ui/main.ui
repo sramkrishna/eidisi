@@ -17,7 +17,7 @@
             <property name="can_focus">False</property>
             <property name="vexpand">True</property>
             <child>
-              <object class="GtkTextView" id="textwindow">
+              <object class="GtkTextView" id="chatbox">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
